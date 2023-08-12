@@ -13,7 +13,7 @@ blogRoutes.get("/", blogController.getAllBlog);
 //get blog by authorname
 blogRoutes.get("/:author_name", blogController.getBlogbyAuthorName);
 //get blog by title
-blogRoutes.post("/", blogController.getBlogbyTitle);
+blogRoutes.post("/title", blogController.getBlogbyTitle);
 //add blog
 blogRoutes.post(
   "/",
