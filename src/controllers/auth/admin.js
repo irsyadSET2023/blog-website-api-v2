@@ -1,73 +1,69 @@
-import query from "../../database";
+import Users from "../../database/model/Users";
+import Blogs from "../../database/model/Blogs";
+import Comments from "../../database/model/Comments";
+import postgressConnection from "../../database/connection";
 
 async function deleteUser(req, res) {
-  let selected_user_id = req.body.id;
-  checkUser(req, res, selected_user_id);
-  let current_timestamp = "CURRENT_TIMESTAMP";
-  let message = `Account ${selected_user_id} is deleted`;
-  utilFunction(res, selected_user_id, current_timestamp, message);
-}
-
-async function undoDeleteUser(req, res) {
-  let selected_user_id = req.body.id;
-  checkUser(req, res, selected_user_id);
-  let current_timestamp = "NULL";
-  let message = `Restored Deleted Account ${selected_user_id}`;
-  utilFunction(res, selected_user_id, current_timestamp, message);
-}
-
-async function utilFunction(res, userId, status, message) {
+  const userId = req.body.user_id;
   try {
-    // Start a transaction
-    await query("BEGIN");
+    await postgressConnection.transaction(async (t) => {
+      await Users.destroy({
+        where: { id: userId },
+        transaction: t,
+      });
 
-    // UPDATE query to set the new salary in the "employees" table
-    const deleteUsersQuery = `
-      UPDATE users set deleted_at=${status} WHERE id=$1
-    `;
-
-    const deleteUsersValues = [userId];
-    // console.log("Hellow");
-    const deleteUsersResult = await query(deleteUsersQuery, deleteUsersValues);
-    console.log(deleteUsersResult);
-    deleteUsersResult;
-    // INSERT query to add the salary change to the "salary_audit_log" table
-
-    const deleteBlogQuery = `
-    UPDATE posts set deleted_at=${status} WHERE author_id=$1
-    `;
-
-    const deleteBlogValues = [userId];
-    await query(deleteBlogQuery, deleteBlogValues);
-
-    const deleteCommentQuery = `UPDATE comments set deleted_at=${status} WHERE user_id=$1`;
-    const deleteCommentValues = [userId];
-    await query(deleteCommentQuery, deleteCommentValues);
-
-    // Commit the transaction
-    await query("COMMIT");
-    // client.release();
-
-    // Send a response with the updated employee information
-    res.json({
-      message: message,
-      // data: deleteUsersResult.rows[0],
+      await Blogs.destroy({
+        where: { authorId: userId },
+        transaction: t,
+      });
+      await Comments.destroy({
+        where: { userId: userId },
+        transaction: t,
+      });
     });
+
+    res.status(200).json({ message: `Account for user ${userId} is deleted` });
   } catch (error) {
-    // Rollback the transaction in case of an error
-    await query("ROLLBACK");
-    // client.release();
-    res.status(500).json({ error: error });
+    res.status(500).json(error);
   }
 }
 
-function checkUser(req, res, selected_user_id) {
-  if (req.session.auth === selected_user_id)
-    res.status(404).json({ message: "You are in your account" });
+async function restoreUser(req, res) {
+  const userId = req.body.user_id;
+  try {
+    await postgressConnection.transaction(async (t) => {
+      const restoredUser = await Users.restore({
+        where: { id: userId },
+        transaction: t,
+      });
+
+      if (restoredUser) {
+        await Blogs.restore({
+          where: { authorId: userId },
+          transaction: t,
+        });
+
+        await Comments.restore({
+          where: { userId: userId },
+          transaction: t,
+        });
+
+        res
+          .status(200)
+          .json({ message: `Account ${userId} reactivated successfully.` });
+      } else {
+        res
+          .status(404)
+          .json({ message: "User not found or already restored." });
+      }
+    });
+  } catch (error) {
+    res.status(500).json(error);
+  }
 }
 
 const adminPrivillege = {
   deleteUser,
-  undoDeleteUser,
+  restoreUser,
 };
 export default adminPrivillege;

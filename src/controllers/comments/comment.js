@@ -1,5 +1,4 @@
 import { Op } from "sequelize";
-import query from "../../database";
 import Blogs from "../../database/model/Blogs";
 import Comments from "../../database/model/Comments";
 

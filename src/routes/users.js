@@ -24,6 +24,6 @@ userRoutes.delete("/", isAuthenticated, userAuthenthication.deactivateAccount);
 userRoutes.put("/", isAuthenticated, userAuthenthication.updateUser);
 //get all user
 userRoutes.get("/", userController.getAllUsers);
-//get single user
-userRoutes.get("/:id", userController.getSingleUser);
+//get single user by name
+userRoutes.get("/:id", userController.getUserbyName);
 export default userRoutes;

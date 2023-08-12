@@ -7,6 +7,6 @@ const adminRoutes = Router();
 //admin delete user
 adminRoutes.delete("/", isAuthenticated, isAdmin, adminPrivillege.deleteUser);
 //admin undo delete
-adminRoutes.post("/", isAuthenticated, isAdmin, adminPrivillege.undoDeleteUser);
+adminRoutes.post("/", isAuthenticated, isAdmin, adminPrivillege.restoreUser);
 
 export default adminRoutes;

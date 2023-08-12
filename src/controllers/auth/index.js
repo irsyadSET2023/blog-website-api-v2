@@ -1,9 +1,9 @@
-import query from "../../database";
 import bcrypt from "bcryptjs";
 import Users from "../../database/model/Users";
 import { Op } from "sequelize";
 import Blogs from "../../database/model/Blogs";
 import Comments from "../../database/model/Comments";
+import postgressConnection from "../../database/connection";
 
 async function registerUser(req, res) {
   //receive data from body
@@ -89,31 +89,27 @@ async function deactivateAccount(req, res) {
   const userId = req.session.auth;
 
   try {
-    const deletedUser = await Users.destroy({ where: { id: userId } });
-  } catch (error) {
-    res.status(500).json(error);
-    return;
-  }
+    await postgressConnection.transaction(async (t) => {
+      const deletedUser = await Users.destroy({
+        where: { id: userId },
+        transaction: t,
+      });
 
-  try {
-    const deletedUserBlogs = await Blogs.destroy({
-      where: { authorId: userId, deletedUserBlogs },
+      await Blogs.destroy({
+        where: { authorId: userId },
+        transaction: t,
+      });
+
+      await Comments.destroy({
+        where: { userId: userId },
+        transaction: t,
+      });
     });
+
+    res.status(200).json({ message: `Your Account is deactivated` });
   } catch (error) {
     res.status(500).json(error);
-    return;
   }
-
-  try {
-    const deletedUserComments = await Comments.destroy({
-      where: { userId: userId, deletedUserComments },
-    });
-  } catch (error) {
-    res.status(500).json(error);
-    return;
-  }
-
-  res.status(200).json({ message: `Your Account is deactivated`, deletedUser });
 }
 
 const userAuthenthication = {
@@ -122,6 +118,5 @@ const userAuthenthication = {
   login,
   logout,
   deactivateAccount,
-  // adminPrivillegeDelete,
 };
 export default userAuthenthication;

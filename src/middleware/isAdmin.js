@@ -1,11 +1,14 @@
-import query from "../database";
+import Users from "../database/model/Users";
 
 async function isAdmin(req, res, next) {
-  const data = await query("SELECT is_admin FROM users WHERE id = $1", [
-    req.user,
-  ]);
-  const user = data.rows[0];
-  if (user.is_admin) {
+  let user;
+  try {
+    user = await Users.findOne({ where: { id: req.user } });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+  // console.log(user., "Hello");
+  if (user.isAdmin) {
     next();
   } else {
     res.status(403).json({ message: "Invalid admin request" });
