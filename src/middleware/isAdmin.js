@@ -6,6 +6,7 @@ async function isAdmin(req, res, next) {
     user = await Users.findOne({ where: { id: req.user } });
   } catch (error) {
     res.status(500).json({ error });
+    return;
   }
   // console.log(user., "Hello");
   if (user.isAdmin) {

@@ -7,8 +7,10 @@ async function getAllComments(req, res) {
     const comments = await Comments.findAll();
     if (!comments.length) {
       res.status(404).json({ message: "No Comment Found" });
+      return;
     } else {
       res.status(200).json({ message: "List of All Comments", comments });
+      return;
     }
   } catch (error) {
     res.status(500).json(error);
@@ -23,9 +25,11 @@ async function getCommentsbyBlogsTitle(req, res) {
     //blogInfo data structure is array
     if (!blogInfo.length) {
       res.status(404).json({ message: "Blog with this title not found" });
+      return;
     }
   } catch (error) {
     res.status(500).json({ error });
+    return;
   }
 
   let arrBlogId = [];
@@ -38,12 +42,17 @@ async function getCommentsbyBlogsTitle(req, res) {
 
   try {
     const comments = await Comments.findAll({
+      //get all the comments with this blog id
       where: { [Op.or]: arrBlogId },
     });
     if (!comments.length) {
       res.status(404).json({ message: "No Comment Found for this blog" });
+      return;
     } else {
-      res.status(200).json({ message: "List of All Comments", comments });
+      res
+        .status(200)
+        .json({ message: `List of All Comments for ${blogTitle}`, comments });
+      return;
     }
   } catch (error) {
     res.status(500).json(error);
@@ -64,9 +73,11 @@ async function postComments(req, res) {
     blogId = blogInfo.id;
     if (!blogInfo) {
       res.status(404).json({ message: "Not Found" });
+      return;
     }
   } catch (error) {
     res.status(500).json({ error });
+    return;
   }
 
   await Comments.create({
@@ -77,9 +88,11 @@ async function postComments(req, res) {
   })
     .then(function (value) {
       res.status(200).json({ message: "Comment is Created", value });
+      return;
     })
     .catch(function (error) {
       res.status(500).json({ error });
+      return;
     });
 }
 
@@ -87,29 +100,35 @@ async function deleteComments(req, res) {
   const commentSlug = req.body.comment_slug;
 
   await Comments.destroy({
-    where: { commentSlug: commentSlug },
+    where: { [Op.and]: [{ commentSlug: commentSlug }, { userId: userId }] },
   })
     .then(function (value) {
       res.status(200).json({ Message: "Comment is deleted", value });
+      return;
     })
     .catch(function (error) {
       res.status(500).json({ error });
+      return;
     });
 }
 
 async function editComments(req, res) {
   const commentSlug = req.body.comment_slug;
   const newComment = req.body.comment_user;
-
+  const userId = req.session.auth;
+  console.log(userId, newComment, commentSlug);
   await Comments.update(
     { comment: newComment },
-    { where: { commentSlug: commentSlug } }
+    { where: { [Op.and]: [{ commentSlug: commentSlug }, { userId: userId }] } }
   )
     .then(function (value) {
       res.status(200).json({ Message: "Comment is edited", value });
+      return;
     })
     .catch(function (error) {
+      console.log("error 22");
       res.status(500).json({ error });
+      return;
     });
 }
 

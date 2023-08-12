@@ -19,9 +19,11 @@ async function registerUser(req, res) {
   })
     .then(async (result) => {
       res.status(200).json({ message: "Account Created", data: result });
+      return;
     })
     .catch(async (error) => {
       res.status(500).json({ error });
+      return;
     });
 }
 
@@ -29,7 +31,6 @@ async function updateUser(req, res) {
   const userId = req.session.auth;
   const body = req.body;
   const updatedColumns = {};
-
   // Construct the SET clause for the SQL query
   Object.entries(body).forEach(([key, value]) => {
     if (key === "password") {
@@ -46,6 +47,7 @@ async function updateUser(req, res) {
       where: { id: userId },
     });
     res.status(200).json({ message: `User ${userId} is updated`, updatedUser });
+    return;
   } catch (error) {
     res.status(500).json(error);
   }
@@ -68,6 +70,7 @@ async function login(req, res) {
         session: req.session,
       };
       res.status(200).json(serverRes);
+      return;
     } else {
       const serverRes = {
         message: "Login Unsuccesful",
@@ -81,8 +84,12 @@ async function login(req, res) {
 
 async function logout(req, res) {
   const session = req.session.destroy();
-  console.log(session);
-  res.status(200).json({ message: "Successfully logout" });
+  try {
+    console.log(session);
+    res.status(200).json({ message: "Successfully logout" });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
 }
 
 async function deactivateAccount(req, res) {
@@ -107,8 +114,10 @@ async function deactivateAccount(req, res) {
     });
 
     res.status(200).json({ message: `Your Account is deactivated` });
+    return;
   } catch (error) {
     res.status(500).json(error);
+    return;
   }
 }
 

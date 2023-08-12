@@ -7,8 +7,10 @@ async function getAllBlog(req, res) {
     const blogs = await Blogs.findAll();
     if (!blogs.length) {
       res.status(404).json({ message: "No blog Found" });
+      return;
     } else {
       res.status(200).json({ message: "List of All Blogs", blogs });
+      return;
     }
   } catch (error) {
     res.status(500).json(error);
@@ -28,6 +30,7 @@ async function getBlogbyAuthorName(req, res) {
     }
   } catch (error) {
     res.status(500).json({ error });
+    return;
   }
 
   try {
@@ -39,6 +42,7 @@ async function getBlogbyAuthorName(req, res) {
       res
         .status(200)
         .json({ message: `List of All Blogs by ${authorName}`, blogs });
+      return;
     }
   } catch (error) {
     res.status(500).json(error);
@@ -51,10 +55,12 @@ async function getBlogbyTitle(req, res) {
     const blogs = await Blogs.findAll({ where: { title: blogTitle } });
     if (!blogs.length) {
       res.status(404).json({ message: "No blog Found", blogs, authorsInfo });
+      return;
     } else {
       res
         .status(200)
         .json({ message: `List of All Blogs by title ${blogTitle}`, blogs });
+      return;
     }
   } catch (error) {
     res.status(500).json(error);
@@ -106,17 +112,16 @@ async function updateBlog(req, res) {
   const body = req.body;
   const updatedColumns = {};
 
-  console.log(typeof userId, " ", userId);
-
   Object.entries(body).forEach(([key, value]) => {
     updatedColumns[key] = value;
   });
   console.log(updatedColumns);
   try {
     const updatedBlog = await Blogs.update(updatedColumns, {
-      where: { slug: blogSlug },
+      where: { [Op.and]: [{ slug: blogSlug }, { authorId: userId }] },
     });
     res.status(200).json({ message: "Blog is updated", updatedBlog });
+    return;
   } catch (error) {
     res.status(500).json(error);
   }
@@ -127,9 +132,11 @@ async function deleteBlog(req, res) {
   await Blogs.destroy({ where: { slug: blogSlug } })
     .then(function (value) {
       res.status(200).json({ message: "Your post is deleted" });
+      return;
     })
     .catch(function (error) {
       res.status(500).json({ message: "Server error", error });
+      return;
     });
 }
 

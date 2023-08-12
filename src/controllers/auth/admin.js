@@ -23,6 +23,7 @@ async function deleteUser(req, res) {
     });
 
     res.status(200).json({ message: `Account for user ${userId} is deleted` });
+    return;
   } catch (error) {
     res.status(500).json(error);
   }
@@ -51,10 +52,12 @@ async function restoreUser(req, res) {
         res
           .status(200)
           .json({ message: `Account ${userId} reactivated successfully.` });
+        return;
       } else {
         res
           .status(404)
           .json({ message: "User not found or already restored." });
+        return;
       }
     });
   } catch (error) {
