@@ -98,7 +98,7 @@ async function postComments(req, res) {
 
 async function deleteComments(req, res) {
   const commentSlug = req.body.comment_slug;
-
+  const userId = req.session.auth;
   await Comments.destroy({
     where: { [Op.and]: [{ commentSlug: commentSlug }, { userId: userId }] },
   })
