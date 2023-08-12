@@ -8,7 +8,7 @@ const Blogs = postgressConnection.define(
     title: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: false,
     },
     body: {
       type: DataTypes.TEXT,

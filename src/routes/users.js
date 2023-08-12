@@ -17,7 +17,7 @@ userRoutes.post(
 //login user
 userRoutes.post("/login", loginValidator, validate, userAuthenthication.login);
 //logout user
-userRoutes.get("/logout", isAuthenticated, userAuthenthication.logout);
+userRoutes.post("/logout", isAuthenticated, userAuthenthication.logout);
 //delete user
 userRoutes.delete("/", isAuthenticated, userAuthenthication.deactivateAccount);
 //update single user

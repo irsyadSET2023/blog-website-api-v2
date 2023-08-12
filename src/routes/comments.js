@@ -9,7 +9,7 @@ const commentsRoutes = Router();
 //get all comments
 commentsRoutes.get("/", commentsController.getAllComments);
 //get comments by blog title
-commentsRoutes.get("/:title", commentsController.getCommentsbyBlogsTitle);
+commentsRoutes.post("/title", commentsController.getCommentsbyBlogsTitle);
 
 //post comments
 commentsRoutes.post("/", isAuthenticated, commentsController.postComments);

@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import query from "../../database";
 import Blogs from "../../database/model/Blogs";
 import Comments from "../../database/model/Comments";
@@ -16,16 +17,32 @@ async function getAllComments(req, res) {
 }
 
 async function getCommentsbyBlogsTitle(req, res) {
-  const blogTitle = req.params.title;
+  const blogTitle = req.body.title;
   let blogInfo;
   try {
-    blogInfo = await Comments.findAll({ where: { title: blogTitle } });
-  } catch (error) {}
+    blogInfo = await Blogs.findAll({ where: { title: blogTitle } });
+    //blogInfo data structure is array
+    if (!blogInfo.length) {
+      res.status(404).json({ message: "Blog with this title not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+
+  let arrBlogId = [];
+  blogInfo.forEach(({ title, id }) => {
+    let titleAndId = {};
+    console.log(title, id);
+    titleAndId.blogId = id;
+    arrBlogId.push(titleAndId);
+  });
 
   try {
-    const comments = await Comments.findAll({ where: { blogId: blogInfo.id } });
+    const comments = await Comments.findAll({
+      where: { [Op.or]: arrBlogId },
+    });
     if (!comments.length) {
-      res.status(404).json({ message: "No Comment Found" });
+      res.status(404).json({ message: "No Comment Found for this blog" });
     } else {
       res.status(200).json({ message: "List of All Comments", comments });
     }
@@ -68,7 +85,6 @@ async function postComments(req, res) {
 }
 
 async function deleteComments(req, res) {
-  const userId = req.session.auth;
   const commentSlug = req.body.comment_slug;
 
   await Comments.destroy({

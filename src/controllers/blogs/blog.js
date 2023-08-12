@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import Blogs from "../../database/model/Blogs";
 import Users from "../../database/model/Users";
 
@@ -45,12 +46,11 @@ async function getBlogbyAuthorName(req, res) {
 }
 
 async function getBlogbyTitle(req, res) {
-  const blogTitle = req.params.title;
+  const blogTitle = req.body.title;
   try {
     const blogs = await Blogs.findAll({ where: { title: blogTitle } });
     if (!blogs.length) {
       res.status(404).json({ message: "No blog Found", blogs, authorsInfo });
-      return;
     } else {
       res
         .status(200)
@@ -69,6 +69,22 @@ async function addBlog(req, res) {
   const dateTime = Math.floor(Date.now());
   const blogSlug =
     Math.random().toString(36).substring(2, 8) + "_" + String(dateTime);
+
+  try {
+    const blogs = await Blogs.findAll({
+      where: { [Op.and]: [{ title: blogTitle }, { authorId: authorId }] },
+    });
+    if (blogs.length > 0) {
+      res.status(403).json({
+        message:
+          "This title already exist. You cannot have blogs with same title",
+      });
+      return;
+    }
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+
   await Blogs.create({
     authorId: authorId,
     title: blogTitle,
@@ -77,6 +93,7 @@ async function addBlog(req, res) {
   })
     .then(function (blog) {
       res.status(200).json({ message: "Blog is Created", blog });
+      return;
     })
     .catch(function (error) {
       res.status(500).json({ error });

@@ -1,20 +1,24 @@
 import supertest from "supertest";
 import app from "../app";
+import dbInit from "../database/init";
+import postgressConnection from "../database/connection";
+import { QueryTypes } from "sequelize";
 import session from "supertest-session";
-import query from "../database";
 
 describe("test authentication controller", function () {
-  // beforeAll(async function () {
-  //   await dbInit();
-  // });
+  beforeAll(async function () {
+    await dbInit();
+  });
 
   afterAll(async function () {
-    await query("DELETE FROM users WHERE username=$1", ["adnan"]);
+    postgressConnection.query("DELETE FROM users WHERE user_name='adnan' ", {
+      type: QueryTypes.DELETE,
+    });
   });
   test("Login with the correct identifier and password", async function () {
     const result = await supertest(app)
       .post("/users/login")
-      .send({ identifier: "irsyad", password: "password" });
+      .send({ identifier: "irsyadun", password: "irsyadun1234" });
     expect(result.statusCode).toEqual(200);
     expect(result.body.message).toBe("Login successful");
   });
@@ -24,7 +28,7 @@ describe("test authentication controller", function () {
       .post("/users/login")
       .send({ identifier: "", password: "" });
     expect(result.statusCode).toEqual(403);
-    // expect(result.body.err.errors[0].msg).toBe("User Does Not Exist");
+    expect(result.body.err.errors[0].msg).toBe("User Does Not Exist");
   });
 
   test("Register User with incorrect username that has number", async function () {
@@ -34,7 +38,7 @@ describe("test authentication controller", function () {
       email: "adnan@gmail.com",
     });
     expect(result.statusCode).toEqual(403);
-    // expect(result.body.err.errors[0].msg).toBe("Must Be Alphabet Only");
+    expect(result.body.err.errors[0].msg).toBe("Must Be Alphabet Only");
   });
 
   test("Register User with incorrect email", async function () {
@@ -44,7 +48,7 @@ describe("test authentication controller", function () {
       email: "adnan@gmail",
     });
     expect(result.statusCode).toEqual(403);
-    // expect(result.body.err.errors[0].msg).toBe("Must be email");
+    expect(result.body.err.errors[0].msg).toBe("Must be email");
   });
 
   test("Register User with correct parameter", async function () {
@@ -54,26 +58,22 @@ describe("test authentication controller", function () {
       email: "adnan@gmail.com",
     });
     expect(result.statusCode).toEqual(200);
-    // expect(result.body.message).toBe("Register");
+    expect(result.body.message).toBe("Account Created");
   });
 });
 
-describe("test login logout", function () {
-  const identifier = "irsyad";
-  const password = "password";
+describe("test protected route", function () {
+  const identifier = "irsyadun";
+  const password = "irsyadun1234";
   let authSession;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     authSession = session(app); // Use request.agent to maintain cookies
+    await authSession.post("/users/login").send({ identifier, password });
   });
 
-  test("return 200 with message 'Protected Route' and user data, Check Logout", async () => {
-    const loginResponse = await authSession
-      .post("/users/login")
-      .send({ identifier, password });
-    expect(loginResponse.status).toBe(200);
-
-    const logoutResponse = await authSession.get("/users/logout");
+  test("Check Logout", async () => {
+    const logoutResponse = await authSession.post("/users/logout");
     expect(logoutResponse.status).toBe(200);
     expect(logoutResponse.body.message).toBe("Successfully logout");
   });
